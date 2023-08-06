@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-
 import openai
 import re
 
@@ -35,4 +31,3 @@ def info_extractor(text):
     reason = '\n'.join(lines[1:]).strip()
 
     return score, reason
-
