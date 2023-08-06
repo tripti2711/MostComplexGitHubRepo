@@ -3,43 +3,24 @@
 
 import re
 import requests
-#from config import skip_files_extensions, skip_files_patterns, proper_file_names
 import nbconvert
 import tiktoken
+import yaml
+from langchain.langchain import LangChain
 
-def fetch_repository(username):
-    url = f"https://api.github.com/users/{username}/repos"
-    response = requests.get(url)
-    if response.status_code == 200:
-        repositories = response.json()
-        return repositories
-    else:
-        return None
+# Function to read the exclude configuration from the YAML file
+def read_exclude_config(file_path):
+    with open(file_path, 'r') as config_file:
+        config = yaml.safe_load(config_file)
+    return config
 
-def convert_to_chunk(code, max_chunk_length=3000):
-    lines = code.splitlines()
-    encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
+# Load the exclude configuration from the config file
+exclude_config = read_exclude_config('exclude_config.yaml')
+skip_files_extensions = exclude_config.get('skip_files_extensions', [])
+skip_files_patterns = exclude_config.get('skip_files_patterns', [])
 
-    all_chunks = []
-    current_chunk = ""
-    encoded_lines = str(encoding).splitlines()
-    for line in encoded_lines:
-        # Check if adding the line to the current chunk exceeds the maximum length
-        if len(current_chunk) + len(line) < max_chunk_length:
-            current_chunk += line + '\n'
-        else:
-            # If the current chunk exceeds the maximum length, add it to the list of chunks
-            all_chunks.append(current_chunk)
-            # Start a new chunk with the current line
-            current_chunk = line + '\n'
-
-    # Add the last chunk to the list of chunks
-    all_chunks.append(current_chunk)
-
-    return all_chunks
-
-def repository_complexity_evaluation(username):
-    url = f"https://api.github.com/users/{username}/repos"
+def repository_complexity_evaluation(github_url):
+    url = f"https://api.github.com/users/{github_url}/repos"
     response = requests.get(url)
     if response.status_code == 200:
         repositories = response.json()
@@ -67,8 +48,8 @@ def repository_complexity_evaluation(username):
             file_name = file['name']
 
             # Exclude certain file types or directories if needed
-            #if file_name in proper_file_names or file_path.endswith(tuple(skip_files_extensions)) or any(file_path.startswith(pattern) for pattern in skip_files_patterns):
-             #   continue
+            if file_path.endswith(tuple(skip_files_extensions)) or any(file_path.startswith(pattern) for pattern in skip_files_patterns):
+                continue
 
             # Get the download URL
             download_url = file['download_url']
@@ -117,16 +98,35 @@ def repository_complexity_evaluation(username):
 
         # Get the score and reason for the entire code
         score, reason = generate_gpt_response(final_prompt)
-
-        # Update the most complex repository if necessary
-        if score > max_complexity_score:
-            max_complexity_score = score
+        complexity_score=calculate_complexity_score(reason)
+        # Update the most complex repository
+        if complexity_score > max_complexity_score:
+            max_complexity_score = complexity_score
             most_complex_repo = repo_name
             most_complex_reason = reason
 
-    return most_complex_repo, most_complex_reason
+    return most_complex_repo, max_complexity_score, most_complex_reason
 
 
+def convert_to_chunk(code, max_chunk_length=3000):
+    lines = code.splitlines()
+    encoding = tiktoken.encoding_for_model('gpt-3.5-turbo')
 
+    all_chunks = []
+    current_chunk = ""
+    encoded_lines = str(encoding).splitlines()
+    for line in encoded_lines:
+        # Check if adding the line to the current chunk exceeds the maximum length
+        if len(current_chunk) + len(line) < max_chunk_length:
+            current_chunk += line + '\n'
+        else:
+            # If the current chunk exceeds the maximum length, add it to the list of chunks
+            all_chunks.append(current_chunk)
+            # Start a new chunk with the current line
+            current_chunk = line + '\n'
 
+    # Add the last chunk to the list of chunks
+    all_chunks.append(current_chunk)
+
+    return all_chunks
 

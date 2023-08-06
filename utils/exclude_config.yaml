@@ -1,0 +1,15 @@
+# List of file extensions to exclude
+skip_files_extensions:
+  - txt
+  - csv
+  # Add more file extensions here if needed
+
+# List of directory patterns to exclude (e.g., relative paths)
+skip_files_patterns:
+  - "example_directory/"
+  - "another_directory/subdirectory/"
+  # Add more directory patterns here if needed
+
+
+
+

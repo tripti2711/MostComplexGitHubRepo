@@ -7,7 +7,7 @@ import re
 
 def generate_gpt_response(prompt):
     # Set up OpenAI API credentials
-    openai.api_key = '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'
+    openai.api_key = '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'
     
     response = openai.ChatCompletion.create(
         model='gpt-3.5-turbo',
