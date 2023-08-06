@@ -2,6 +2,8 @@
 skip_files_extensions:
   - txt
   - csv
+  - jpg
+  - png
   # Add more file extensions here if needed
 
 # List of directory patterns to exclude (e.g., relative paths)
