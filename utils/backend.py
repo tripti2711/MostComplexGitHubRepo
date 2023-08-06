@@ -129,4 +129,3 @@ def convert_to_chunk(code, max_chunk_length=3000):
     all_chunks.append(current_chunk)
 
     return all_chunks
-
